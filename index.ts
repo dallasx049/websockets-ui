@@ -1,5 +1,4 @@
 import 'dotenv/config';
 
-import { initGameServer } from './src/gameServer.ts';
-
-initGameServer();
+import './src/gameServer.ts';
+import './src/wsServer.ts';
