@@ -11,8 +11,13 @@ import {
   PlayerNotExistsError,
   PlayersService,
 } from './models/playersService.ts';
-import { SocketChannel } from './models/socketChanel.ts';
 import {
+  InvalidMessageFormatError,
+  SocketChannel,
+} from './models/socketChanel.ts';
+import {
+  PlayerAlreadyInRoomError,
+  PlayerNotInRoomError,
   RoomAlreadyExistsError,
   RoomNotFoundError,
   RoomsService,
@@ -36,14 +41,26 @@ wsServer.on('connection', (socket) => {
 
   socket.on('close', async (code) => {
     const removedPlayer = players.removePlayer(socket);
+    const room = rooms.findRoomByPlayer(socket);
 
     if (removedPlayer) {
       await socketChannel.broadcast({
         type: ServerMessageTypes.UPDATE_WINNERS,
         data: players.getAllPlayers(),
       });
-      console.log(`--> Player ${removedPlayer.name} left the game`);
+      console.log(`--> Player ${removedPlayer.name} disconnected`);
       console.log(`--> Scoreboard updated`);
+    }
+
+    if (room && removedPlayer) {
+      rooms.removePlayer(room.roomId, socket);
+
+      await socketChannel.broadcast({
+        type: ServerMessageTypes.UPDATE_ROOM,
+        data: rooms.serialize(),
+      });
+
+      console.log(`--> Rooms updated`);
     }
 
     console.log(`Socket closed with ${code} code`);
@@ -96,6 +113,44 @@ wsServer.on('connection', (socket) => {
 
           break;
         }
+
+        case SocketMessageTypes.ADD_USER_TO_ROOM: {
+          const player = players.getPlayer(socket);
+
+          if (!player) return;
+
+          rooms.addPlayer(message.data.indexRoom, socket);
+
+          const room = rooms.getRoom(message.data.indexRoom);
+
+          if (!room) return;
+
+          console.log(`--> User joined the room`);
+
+          await socketChannel.broadcast({
+            type: ServerMessageTypes.UPDATE_ROOM,
+            data: rooms.serialize(),
+          });
+
+          console.log(`--> Rooms updated`);
+
+          await socketChannel.broadcast(
+            {
+              type: ServerMessageTypes.CREATE_GAME,
+              data: {
+                idGame: '1',
+                idPlayer: player.index,
+              },
+            },
+            {
+              clients: room.roomUsers,
+            },
+          );
+
+          console.log(`--> Game created`);
+
+          break;
+        }
       }
     } catch (e) {
       if (e instanceof RoomNotFoundError) {
@@ -105,6 +160,12 @@ wsServer.on('connection', (socket) => {
       } else if (e instanceof PlayerAlreadyExistsError) {
         console.log(e.message);
       } else if (e instanceof PlayerNotExistsError) {
+        console.log(e.message);
+      } else if (e instanceof PlayerAlreadyInRoomError) {
+        console.log(e.message);
+      } else if (e instanceof PlayerNotInRoomError) {
+        console.log(e.message);
+      } else if (e instanceof InvalidMessageFormatError) {
         console.log(e.message);
       } else {
         socket.close();

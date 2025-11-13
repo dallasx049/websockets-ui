@@ -18,6 +18,10 @@ interface IRoomsService {
   getAllRooms: () => Room[];
   serialize: () => RoomState[];
   getSerialized: () => RoomState[];
+  findRoomByPlayer: (player: WebSocket) => Room | undefined;
+  removePlayer: (key: string, player: WebSocket) => void;
+  removeRoom: (key: string) => void;
+  getRoom: (key: string) => Room | undefined;
 }
 
 export class RoomsService implements IRoomsService {
@@ -50,14 +54,50 @@ export class RoomsService implements IRoomsService {
     return room;
   }
 
+  findRoomByPlayer(player: WebSocket) {
+    return [...this.rooms.values()].find(({ roomUsers }) =>
+      [...roomUsers].includes(player),
+    );
+  }
+
+  getRoom(key: string) {
+    return this.rooms.get(key);
+  }
+
   addPlayer(key: string, player: WebSocket) {
     const room = this.rooms.get(key);
+
     if (!room) throw new RoomNotFoundError();
+    if (room.roomUsers.has(player)) throw new PlayerAlreadyInRoomError();
 
     room.roomUsers.add(player);
 
     if (room.roomUsers.size >= this.MAX_PLAYERS) {
       room.joinable = false;
+    }
+  }
+
+  removeRoom(key: string) {
+    const room = this.rooms.get(key);
+
+    if (!room) throw new RoomNotFoundError();
+
+    this.rooms.delete(key);
+    this.ownerToRoomId.delete(room.owner);
+  }
+
+  removePlayer(key: string, player: WebSocket) {
+    const room = this.rooms.get(key);
+
+    if (!room) throw new RoomNotFoundError();
+    if (!room.roomUsers.has(player)) throw new PlayerNotInRoomError();
+
+    room.roomUsers.delete(player);
+
+    if (room.roomUsers.size === 0) {
+      this.removeRoom(key);
+    } else if (room.roomUsers.size < this.MAX_PLAYERS) {
+      room.joinable = true;
     }
   }
 
@@ -93,6 +133,18 @@ export class RoomAlreadyExistsError extends Error {
 
 export class RoomNotFoundError extends Error {
   constructor(message = ErrorMessages.ROOM_NOT_FOUND) {
+    super(message);
+  }
+}
+
+export class PlayerAlreadyInRoomError extends Error {
+  constructor(message = ErrorMessages.PLAYER_ALREADY_IN_ROOM) {
+    super(message);
+  }
+}
+
+export class PlayerNotInRoomError extends Error {
+  constructor(message = ErrorMessages.PLAYER_NOT_IN_ROOM) {
     super(message);
   }
 }

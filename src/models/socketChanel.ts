@@ -91,13 +91,13 @@ export class SocketChannel implements ISocketChannel {
   }
 }
 
-class SocketNotOpenError extends Error {
+export class SocketNotOpenError extends Error {
   constructor(message = ErrorMessages.SOCKET_NOT_OPEN) {
     super(message);
   }
 }
 
-class InvalidMessageFormatError extends Error {
+export class InvalidMessageFormatError extends Error {
   constructor(message = ErrorMessages.INVALID_MESSAGE_FORMAT) {
     super(message);
   }
