@@ -1,67 +1,78 @@
-import type { WebSocket } from 'ws';
-import { v4 } from 'uuid';
+import { WebSocket } from 'ws';
 
 import { ErrorMessages } from '../lib/constants.ts';
+import type { RegistrationSocketMessage } from '../lib/types.ts';
 
-export type Player = {
-  name: string;
-  wins: number;
-  index: string;
+type User = RegistrationSocketMessage['data'];
+
+export type Player = User & {
+  score: number;
+  id: string;
+  socket: WebSocket;
 };
 
-type Body = Omit<Player, 'index' | 'wins'>;
-
 export interface IPlayersService {
-  createPlayer: (key: WebSocket, body: Body) => Player;
-  removePlayer: (key: WebSocket) => Player | undefined;
-  getPlayer: (key: WebSocket) => Player | undefined;
+  createPlayer: (socket: WebSocket, user: User) => Player;
   getAllPlayers: () => Player[];
+  getPlayerByName: (id: string) => Player | undefined;
+  findPlayerBySocket: (socket: WebSocket) => Player | undefined;
 }
 
-export class PlayerAlreadyExistsError extends Error {
-  constructor(message = ErrorMessages.PLAYER_ALREADY_EXISTS) {
+export class InvalidPasswordError extends Error {
+  constructor(message = ErrorMessages.INVALID_PASSWORD) {
     super(message);
   }
 }
 
-export class PlayerNotExistsError extends Error {
-  constructor(message = ErrorMessages.PLAYER_NOT_EXISTS) {
+export class PlayerNotFoundError extends Error {
+  constructor(message = ErrorMessages.PLAYER_NOT_FOUND) {
     super(message);
   }
 }
 
 export class PlayersService implements IPlayersService {
-  private players: Map<WebSocket, Player> = new Map();
-  private names = new Set<string>();
+  private players: Map<string, Player> = new Map();
 
-  createPlayer(key: WebSocket, body: Body): Player {
-    if (this.names.has(body.name)) {
-      throw new PlayerAlreadyExistsError();
+  public createPlayer(socket: WebSocket, user: User) {
+    // Check if a user exists
+    const existingPlayer = this.players.get(user.name);
+
+    if (existingPlayer) {
+      // Check password correctness
+      if (existingPlayer.password !== user.password) {
+        throw new InvalidPasswordError();
+      }
+
+      // Update and return existing player
+      const updatedPlayer = { ...existingPlayer, socket };
+
+      this.players.set(user.name, updatedPlayer);
+
+      return updatedPlayer;
     }
 
-    const player = { name: body.name, index: v4(), wins: 0 };
+    // Create new player and store name as its key
+    const player = {
+      ...user,
+      socket,
+      id: user.name,
+      score: 0,
+    };
 
-    this.players.set(key, player);
-    this.names.add(body.name);
-
-    return player;
-  }
-
-  getAllPlayers() {
-    return Array.from(this.players.values());
-  }
-
-  removePlayer(key: WebSocket) {
-    const player = this.getPlayer(key);
-    if (!player) throw new PlayerNotExistsError();
-
-    this.players.delete(key);
-    this.names.delete(player.name);
+    this.players.set(user.name, player);
 
     return player;
   }
 
-  getPlayer(key: WebSocket) {
-    return this.players.get(key);
+  public getAllPlayers() {
+    return [...this.players.values()];
+  }
+
+  public getPlayerByName(name: string) {
+    return this.players.get(name);
+  }
+
+  public findPlayerBySocket(socket: WebSocket) {
+    return this.getAllPlayers().find((player) => player.socket === socket);
   }
 }

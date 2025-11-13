@@ -17,12 +17,11 @@ export const Env = {
 } as const;
 
 export const ErrorMessages = {
-  ROOM_ALREADY_EXISTS: 'Room already exist',
+  INVALID_PASSWORD: 'Invalid password',
+  PLAYER_NOT_FOUND: 'Player not found',
   ROOM_NOT_FOUND: 'Room not found',
-  PLAYER_ALREADY_EXISTS: 'Player already exists',
-  PLAYER_NOT_EXISTS: 'Player not exists',
   SOCKET_NOT_OPEN: 'Socket not open',
-  INVALID_MESSAGE_FORMAT: 'Invalid socket message format',
-  PLAYER_ALREADY_IN_ROOM: 'Player already in room',
-  PLAYER_NOT_IN_ROOM: 'Player not in room',
+  INVALID_MESSAGE_FORMAT: 'Invalid message format',
+  ROOM_ALREADY_OWNED: 'Player already created a room',
+  PLAYER_ALREADY_JOINED: 'Player already joined this room',
 } as const;

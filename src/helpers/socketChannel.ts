@@ -5,15 +5,30 @@ import { ErrorMessages } from '../lib/constants.ts';
 
 type BroadcastOptions = {
   excludeSelf?: boolean;
-  clients?: Set<WebSocket>;
+  clients?: WebSocket[];
 };
 
-interface ISocketChannel {
-  send: <T extends Omit<ServerMessage, 'id'>>(message: T) => Promise<void>;
-  broadcast: <T extends Omit<ServerMessage, 'id'>>(
+type Message = Omit<ServerMessage, 'id'>;
+
+export interface ISocketChannel {
+  getSocket: () => WebSocket;
+  send: <T extends Message>(message: T) => Promise<void>;
+  broadcast: <T extends Message>(
     message: T,
     options?: BroadcastOptions,
   ) => Promise<void>;
+}
+
+export class SocketNotOpenError extends Error {
+  constructor(message = ErrorMessages.SOCKET_NOT_OPEN) {
+    super(message);
+  }
+}
+
+export class InvalidMessageFormatError extends Error {
+  constructor(message = ErrorMessages.INVALID_MESSAGE_FORMAT) {
+    super(message);
+  }
 }
 
 export class SocketChannel implements ISocketChannel {
@@ -25,7 +40,11 @@ export class SocketChannel implements ISocketChannel {
     this.server = server;
   }
 
-  send<T extends Omit<ServerMessage, 'id'>>(message: T): Promise<void> {
+  getSocket() {
+    return this.socket;
+  }
+
+  send<T extends Message>(message: T): Promise<void> {
     if (this.socket.readyState !== WebSocket.OPEN) {
       return Promise.reject(new SocketNotOpenError());
     }
@@ -44,15 +63,17 @@ export class SocketChannel implements ISocketChannel {
     });
   }
 
-  async broadcast<T extends Omit<ServerMessage, 'id'>>(
+  async broadcast<T extends Message>(
     message: T,
     options?: {
       excludeSelf?: boolean;
-      clients?: Set<WebSocket>;
+      clients?: WebSocket[];
     },
   ): Promise<void> {
     const promises: Promise<void>[] = [];
-    const clients = options?.clients ?? this.server.clients;
+    const clients = options?.clients
+      ? new Set(options?.clients)
+      : this.server.clients;
 
     const body = JSON.stringify({
       id: 0,
@@ -88,17 +109,5 @@ export class SocketChannel implements ISocketChannel {
     } catch {
       throw new InvalidMessageFormatError();
     }
-  }
-}
-
-export class SocketNotOpenError extends Error {
-  constructor(message = ErrorMessages.SOCKET_NOT_OPEN) {
-    super(message);
-  }
-}
-
-export class InvalidMessageFormatError extends Error {
-  constructor(message = ErrorMessages.INVALID_MESSAGE_FORMAT) {
-    super(message);
   }
 }
