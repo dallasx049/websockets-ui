@@ -8,11 +8,15 @@ type BroadcastOptions = {
   clients?: WebSocket[];
 };
 
+type SendOptions = {
+  socket?: WebSocket;
+};
+
 type Message = Omit<ServerMessage, 'id'>;
 
 export interface ISocketChannel {
   getSocket: () => WebSocket;
-  send: <T extends Message>(message: T) => Promise<void>;
+  send: <T extends Message>(message: T, options?: SendOptions) => Promise<void>;
   broadcast: <T extends Message>(
     message: T,
     options?: BroadcastOptions,
@@ -44,8 +48,10 @@ export class SocketChannel implements ISocketChannel {
     return this.socket;
   }
 
-  send<T extends Message>(message: T): Promise<void> {
-    if (this.socket.readyState !== WebSocket.OPEN) {
+  send<T extends Message>(message: T, options?: SendOptions): Promise<void> {
+    const socket = options?.socket ?? this.socket;
+
+    if (socket.readyState !== WebSocket.OPEN) {
       return Promise.reject(new SocketNotOpenError());
     }
 
@@ -56,7 +62,7 @@ export class SocketChannel implements ISocketChannel {
         data: JSON.stringify(message.data),
       });
 
-      this.socket.send(body, (err) => {
+      socket.send(body, (err) => {
         if (err) rej(err);
         res();
       });
@@ -65,10 +71,7 @@ export class SocketChannel implements ISocketChannel {
 
   async broadcast<T extends Message>(
     message: T,
-    options?: {
-      excludeSelf?: boolean;
-      clients?: WebSocket[];
-    },
+    options?: BroadcastOptions,
   ): Promise<void> {
     const promises: Promise<void>[] = [];
     const clients = options?.clients

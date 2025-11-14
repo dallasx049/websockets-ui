@@ -8,6 +8,7 @@ import {
   handleCreateRoom,
   handleSocketClose,
   handleJoinRoom,
+  handleAddShips,
 } from './controllers/index.ts';
 
 const httpServer = createServer();
@@ -42,6 +43,10 @@ wsServer.on('connection', (socket) => {
         }
         case SocketMessageTypes.ADD_USER_TO_ROOM: {
           await handleJoinRoom({ message, socketChannel });
+          break;
+        }
+        case SocketMessageTypes.ADD_SHIPS: {
+          await handleAddShips({ message, socketChannel });
           break;
         }
       }

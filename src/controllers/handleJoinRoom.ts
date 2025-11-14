@@ -9,6 +9,7 @@ import {
   RoomNotFoundError,
   PlayerAlreadyJoinedRoomError,
   players,
+  games,
 } from '../models/index.ts';
 
 type Params = {
@@ -35,11 +36,35 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
       .map((name) => players.getPlayerByName(name)?.socket)
       .filter((socket) => socket !== undefined);
 
+    const game = games.createGame(
+      message.data.indexRoom,
+      roomPlayers,
+      async (_players) => {
+        _players.forEach(async (player) => {
+          const socket = players.getPlayerByName(player.name)?.socket;
+          if (!socket) return;
+
+          await socketChannel.send(
+            {
+              type: ServerMessageTypes.START_GAME,
+              data: {
+                ships: player.ships,
+                currentPlayerIndex: player.name,
+              },
+            },
+            { socket },
+          );
+        });
+
+        console.log('--> Game started');
+      },
+    );
+
     await socketChannel.broadcast(
       {
         type: ServerMessageTypes.CREATE_GAME,
         data: {
-          idGame: '1', // TODO: add game service logic
+          idGame: game.id,
           idPlayer: currentPlayer,
         },
       },

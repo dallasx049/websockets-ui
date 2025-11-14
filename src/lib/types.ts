@@ -23,10 +23,31 @@ export type AddPlayerToRoomSocketMessage = {
   id: 0;
 };
 
+export type Ship = {
+  position: {
+    x: number;
+    y: number;
+  };
+  direction: boolean;
+  length: number;
+  type: 'small' | 'medium' | 'large' | 'huge';
+};
+
+export type AddShipsSocketMessage = {
+  type: typeof SocketMessageTypes.ADD_SHIPS;
+  data: {
+    gameId: string;
+    ships: Ship[];
+    indexPlayer: string;
+  };
+  id: 0;
+};
+
 export type SocketMessage =
   | RegistrationSocketMessage
   | CreateRoomSocketMessage
-  | AddPlayerToRoomSocketMessage;
+  | AddPlayerToRoomSocketMessage
+  | AddShipsSocketMessage;
 
 type RegistrationServerMessage = {
   type: typeof ServerMessageTypes.REG;
@@ -60,6 +81,15 @@ type UpdateRoomsServerMessage = {
   id: 0;
 };
 
+type StartGameServerMessage = {
+  type: typeof ServerMessageTypes.START_GAME;
+  data: {
+    ships: Ship[];
+    currentPlayerIndex: string;
+  };
+  id: 0;
+};
+
 type CreateGameServerMessage = {
   type: typeof ServerMessageTypes.CREATE_GAME;
   data: {
@@ -72,4 +102,5 @@ export type ServerMessage =
   | RegistrationServerMessage
   | ScoreboardUpdateServerMessage
   | UpdateRoomsServerMessage
-  | CreateGameServerMessage;
+  | CreateGameServerMessage
+  | StartGameServerMessage;
