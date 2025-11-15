@@ -15,6 +15,7 @@ type Game = {
   roomId: string;
   players: Map<string, Player>;
   eventEmitter: EventEmitter;
+  attackTurnPlayerName: string | null;
 };
 
 type BattlegroundMatrix = (
@@ -33,7 +34,7 @@ export class GamesService {
   public createGame(
     roomId: string,
     playersNames: string[],
-    cb: (players: Player[]) => void,
+    cb: (gameId: string, players: Player[]) => void,
   ) {
     const id = v4();
     const players = new Map<string, Player>();
@@ -47,7 +48,14 @@ export class GamesService {
       }),
     );
 
-    const game = { id, roomId, players, eventEmitter: new EventEmitter() };
+    const game: Game = {
+      id,
+      roomId,
+      players,
+      eventEmitter: new EventEmitter(),
+      attackTurnPlayerName: null,
+    };
+
     this.games.set(id, game);
 
     game.eventEmitter.once(EventNames.START, cb);
@@ -69,13 +77,17 @@ export class GamesService {
     const triggerStart = [...game.players.values()].every(({ ready }) => ready);
 
     if (triggerStart) {
-      game.eventEmitter.emit(EventNames.START, [...game.players.values()]);
+      game.eventEmitter.emit(EventNames.START, gameId, [
+        ...game.players.values(),
+      ]);
     }
   }
 
   public attack(gameId: string, playerName: string, x: number, y: number) {
     const game = this.games.get(gameId);
     if (!game) return;
+
+    if (game.attackTurnPlayerName !== playerName) return;
 
     const players = [...game.players.values()];
     const enemy = players.find((player) => player.name !== playerName);
@@ -91,6 +103,7 @@ export class GamesService {
 
     if (cell === null) {
       status = 'miss';
+      this.switchTurn(gameId, enemy.name);
     } else {
       cell.length--;
 
@@ -108,7 +121,15 @@ export class GamesService {
       status,
       enemyName: enemy.name,
       position: { x, y },
+      attackTurnPlayerName: game.attackTurnPlayerName,
     };
+  }
+
+  public switchTurn(gameId: string, playerName: string) {
+    const game = this.games.get(gameId);
+    if (!game) return;
+
+    game.attackTurnPlayerName = playerName;
   }
 
   private _createBattleground(ships: Ship[]) {

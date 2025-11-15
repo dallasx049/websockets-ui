@@ -39,7 +39,7 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
     const game = games.createGame(
       message.data.indexRoom,
       roomPlayers,
-      async (_players) => {
+      async (gameId, _players) => {
         const rnd = Math.random();
         const playerToAttack = rnd < 0.5 ? _players[0].name : _players[1].name;
 
@@ -68,6 +68,8 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
             { socket },
           );
         }
+
+        games.switchTurn(gameId, playerToAttack);
 
         console.log('--> Game started');
         console.log(`--> ${playerToAttack} turn`);
