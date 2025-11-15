@@ -5,14 +5,16 @@ import type { AttackStatus, Ship } from '../lib/types.ts';
 
 type Player = {
   name: string;
-  ships: Ship[];
   ready: boolean;
+  ships: Ship[];
+  battleground: BattlegroundMatrix | null;
 };
 
 type Game = {
   id: string;
   roomId: string;
   players: Map<string, Player>;
+  eventEmitter: EventEmitter;
 };
 
 type BattlegroundMatrix = (
@@ -27,8 +29,6 @@ const EventNames = {
 
 export class GamesService {
   private games: Map<string, Game> = new Map();
-  private gameEvent = new EventEmitter();
-  private battlegrounds: Map<string, BattlegroundMatrix> = new Map();
 
   public createGame(
     roomId: string,
@@ -36,15 +36,21 @@ export class GamesService {
     cb: (players: Player[]) => void,
   ) {
     const id = v4();
-    const players = new Map();
+    const players = new Map<string, Player>();
 
-    playersNames.forEach((name) => players.set(name, { name, ships: [] }));
+    playersNames.forEach((name) =>
+      players.set(name, {
+        name,
+        ships: [],
+        battleground: null,
+        ready: false,
+      }),
+    );
 
-    const game = { id, roomId, players };
-
+    const game = { id, roomId, players, eventEmitter: new EventEmitter() };
     this.games.set(id, game);
 
-    this.gameEvent.once(EventNames.START, cb);
+    game.eventEmitter.once(EventNames.START, cb);
 
     return game;
   }
@@ -56,15 +62,14 @@ export class GamesService {
     const player = game.players.get(playerName);
     if (!player) return;
 
-    player.ships = ships;
     player.ready = true;
-
-    this._createBattleground(playerName, ships);
+    player.ships = ships;
+    player.battleground = this._createBattleground(ships);
 
     const triggerStart = [...game.players.values()].every(({ ready }) => ready);
 
     if (triggerStart) {
-      this.gameEvent.emit(EventNames.START, [...game.players.values()]);
+      game.eventEmitter.emit(EventNames.START, [...game.players.values()]);
     }
   }
 
@@ -76,10 +81,9 @@ export class GamesService {
     const enemy = players.find((player) => player.name !== playerName);
     if (!enemy) return;
 
-    const enemyBattleground = this.battlegrounds.get(enemy.name);
-    if (!enemyBattleground) return;
+    if (!enemy.battleground) return;
 
-    const cell = enemyBattleground[x][y];
+    const cell = enemy.battleground[x][y];
 
     if (cell === undefined) return;
 
@@ -97,7 +101,7 @@ export class GamesService {
       }
     }
 
-    enemyBattleground[x][y] = undefined;
+    enemy.battleground[x][y] = undefined;
 
     return {
       playerName,
@@ -107,8 +111,8 @@ export class GamesService {
     };
   }
 
-  private _createBattleground(playerName: string, ships: Ship[]) {
-    const matrix = Array.from({ length: 10 }, () =>
+  private _createBattleground(ships: Ship[]) {
+    const battleground = Array.from({ length: 10 }, () =>
       Array.from({ length: 10 }).fill(null),
     ) as BattlegroundMatrix;
 
@@ -117,15 +121,15 @@ export class GamesService {
 
       if (direction) {
         for (let i = position.y; i < position.y + length; i++) {
-          matrix[position.x][i] = cell;
+          battleground[position.x][i] = cell;
         }
       } else {
         for (let i = position.x; i < position.x + length; i++) {
-          matrix[i][position.y] = cell;
+          battleground[i][position.y] = cell;
         }
       }
     });
 
-    this.battlegrounds.set(playerName, matrix);
+    return battleground;
   }
 }
