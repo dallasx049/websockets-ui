@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { v4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 import type { AttackStatus, Ship } from '../lib/types.ts';
 import { getRandomNum } from '../helpers/index.ts';
@@ -49,7 +49,7 @@ export class GamesService {
     onGameStart: (gameId: string, players: Player[]) => void,
     onGameEnd: (winnerName: string, loserName: string) => void,
   ) {
-    const id = v4();
+    const id = randomUUID();
     const players = new Map<string, Player>();
 
     playersNames.forEach((name) =>

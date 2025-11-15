@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { v4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 import { type IPlayersService, PlayerNotFoundError } from './playersService.ts';
 import { ErrorMessages } from '../lib/constants.ts';
@@ -48,7 +48,7 @@ export class RoomsService implements IRoomsService {
     const player = this.playersService.findPlayerBySocket(socket);
     if (!player) throw new PlayerNotFoundError();
 
-    const roomId = v4();
+    const roomId = randomUUID();
     const room = {
       id: roomId,
       players: new Set<string>(),
