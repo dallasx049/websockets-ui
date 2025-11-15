@@ -16,6 +16,7 @@ export interface IPlayersService {
   getAllPlayers: () => Player[];
   getPlayerByName: (id: string) => Player | undefined;
   findPlayerBySocket: (socket: WebSocket) => Player | undefined;
+  increaseScore: (playerName: string) => void;
 }
 
 export class InvalidPasswordError extends Error {
@@ -62,6 +63,13 @@ export class PlayersService implements IPlayersService {
     this.players.set(user.name, player);
 
     return player;
+  }
+
+  public increaseScore(playerName: string) {
+    const player = this.players.get(playerName);
+    if (!player) return;
+
+    player.score++;
   }
 
   public getAllPlayers() {

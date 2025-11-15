@@ -143,6 +143,14 @@ type AttackServerMessage = {
   id: 0;
 };
 
+type GameOverServerMessage = {
+  type: typeof ServerMessageTypes.FINISH;
+  data: {
+    winPlayer: string;
+  };
+  id: 0;
+};
+
 export type ServerMessage =
   | RegistrationServerMessage
   | ScoreboardUpdateServerMessage
@@ -150,4 +158,5 @@ export type ServerMessage =
   | CreateGameServerMessage
   | StartGameServerMessage
   | AttackServerMessage
-  | TurnServerMessage;
+  | TurnServerMessage
+  | GameOverServerMessage;

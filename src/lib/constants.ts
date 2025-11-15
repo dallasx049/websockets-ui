@@ -15,6 +15,7 @@ export const ServerMessageTypes = {
   START_GAME: 'start_game',
   ATTACK: 'attack',
   TURN: 'turn',
+  FINISH: 'finish',
 } as const;
 
 export const Env = {

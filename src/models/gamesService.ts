@@ -10,6 +10,7 @@ type Player = {
   ready: boolean;
   ships: Ship[];
   battleground: BattlegroundMatrix | null;
+  pointsToWin: number;
 };
 
 type Game = {
@@ -30,6 +31,7 @@ const MATRIX_SIZE = 10;
 
 const EventNames = {
   START: 'start',
+  WIN: 'win',
 } as const;
 
 export class CellAlreadyHitError extends Error {
@@ -44,7 +46,8 @@ export class GamesService {
   public createGame(
     roomId: string,
     playersNames: string[],
-    cb: (gameId: string, players: Player[]) => void,
+    onGameStart: (gameId: string, players: Player[]) => void,
+    onGameEnd: (winnerName: string, loserName: string) => void,
   ) {
     const id = v4();
     const players = new Map<string, Player>();
@@ -55,6 +58,7 @@ export class GamesService {
         ships: [],
         battleground: null,
         ready: false,
+        pointsToWin: 0,
       }),
     );
 
@@ -68,7 +72,8 @@ export class GamesService {
 
     this.games.set(id, game);
 
-    game.eventEmitter.once(EventNames.START, cb);
+    game.eventEmitter.once(EventNames.START, onGameStart);
+    game.eventEmitter.once(EventNames.WIN, onGameEnd);
 
     return game;
   }
@@ -80,9 +85,12 @@ export class GamesService {
     const player = game.players.get(playerName);
     if (!player) return;
 
+    const { battleground, pointsToWin } = this._createBattleground(ships);
+
     player.ready = true;
     player.ships = ships;
-    player.battleground = this._createBattleground(ships);
+    player.battleground = battleground;
+    player.pointsToWin = pointsToWin;
 
     const triggerStart = [...game.players.values()].every(({ ready }) => ready);
 
@@ -100,10 +108,9 @@ export class GamesService {
     if (game.attackTurnPlayerName !== playerName) return;
 
     const players = [...game.players.values()];
+    const player = players.find((player) => player.name === playerName);
     const enemy = players.find((player) => player.name !== playerName);
-    if (!enemy) return;
-
-    if (!enemy.battleground) return;
+    if (!enemy || !player || !enemy.battleground) return;
 
     const cell = enemy.battleground[x][y];
 
@@ -116,11 +123,16 @@ export class GamesService {
       this.switchTurn(gameId, enemy.name);
     } else {
       cell.length--;
+      player.pointsToWin--;
 
       if (cell.length === 0) {
         status = 'killed';
       } else {
         status = 'shot';
+      }
+
+      if (player.pointsToWin === 0) {
+        game.eventEmitter.emit(EventNames.WIN, player.name, enemy.name);
       }
     }
 
@@ -164,6 +176,8 @@ export class GamesService {
       Array.from({ length: MATRIX_SIZE }).fill(null),
     ) as BattlegroundMatrix;
 
+    let pointsToWin = 0;
+
     ships.forEach(({ length, position, direction }) => {
       const cell = { length };
 
@@ -176,8 +190,10 @@ export class GamesService {
           battleground[i][position.y] = cell;
         }
       }
+
+      pointsToWin += length;
     });
 
-    return battleground;
+    return { battleground, pointsToWin };
   }
 }

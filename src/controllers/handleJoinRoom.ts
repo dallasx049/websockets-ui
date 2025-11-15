@@ -74,6 +74,37 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
         console.log('--> Game started');
         console.log(`--> ${playerToAttack} turn`);
       },
+      async (winnerName, loserName) => {
+        const clients = [winnerName, loserName]
+          .map((name) => players.getPlayerByName(name)?.socket)
+          .filter((socket) => socket !== undefined);
+
+        await socketChannel.broadcast(
+          {
+            type: ServerMessageTypes.FINISH,
+            data: {
+              winPlayer: winnerName,
+            },
+          },
+          { clients },
+        );
+
+        players.increaseScore(winnerName);
+
+        console.log(`--> ${winnerName} won the game`);
+
+        const leaderboardPayload = players
+          .getAllPlayers()
+          .map(({ name, score }) => ({
+            name,
+            wins: score,
+          }));
+        await socketChannel.broadcast({
+          type: ServerMessageTypes.UPDATE_WINNERS,
+          data: leaderboardPayload,
+        });
+        console.log(`--> Leaderboard updated`);
+      },
     );
 
     for (const { socket, name } of clients) {
