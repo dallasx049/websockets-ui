@@ -19,7 +19,6 @@ interface IRoomsService {
     socket: WebSocket,
   ) => void | {
     roomPlayers: string[];
-    currentPlayer: string;
   };
 }
 
@@ -86,7 +85,7 @@ export class RoomsService implements IRoomsService {
 
     if (room.players.size >= this.MAX_PLAYERS) {
       room.open = false;
-      return { roomPlayers: [...room.players], currentPlayer: player.name };
+      return { roomPlayers: [...room.players] };
     }
   }
 

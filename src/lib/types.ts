@@ -43,11 +43,23 @@ export type AddShipsSocketMessage = {
   id: 0;
 };
 
+export type AttackSocketMessage = {
+  type: typeof SocketMessageTypes.ATTACK;
+  data: {
+    gameId: string;
+    x: number;
+    y: number;
+    indexPlayer: string;
+  };
+  id: 0;
+};
+
 export type SocketMessage =
   | RegistrationSocketMessage
   | CreateRoomSocketMessage
   | AddPlayerToRoomSocketMessage
-  | AddShipsSocketMessage;
+  | AddShipsSocketMessage
+  | AttackSocketMessage;
 
 type RegistrationServerMessage = {
   type: typeof ServerMessageTypes.REG;
@@ -98,9 +110,34 @@ type CreateGameServerMessage = {
   };
 };
 
+type TurnServerMessage = {
+  type: typeof ServerMessageTypes.TURN;
+  data: {
+    currentPlayer: string;
+  };
+  id: 0;
+};
+
+export type AttackStatus = 'miss' | 'killed' | 'shot';
+
+type AttackServerMessage = {
+  type: typeof ServerMessageTypes.ATTACK;
+  data: {
+    position: {
+      x: number;
+      y: number;
+    };
+    currentPlayer: string;
+    status: AttackStatus;
+  };
+  id: 0;
+};
+
 export type ServerMessage =
   | RegistrationServerMessage
   | ScoreboardUpdateServerMessage
   | UpdateRoomsServerMessage
   | CreateGameServerMessage
-  | StartGameServerMessage;
+  | StartGameServerMessage
+  | AttackServerMessage
+  | TurnServerMessage;

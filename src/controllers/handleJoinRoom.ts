@@ -31,18 +31,21 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
 
     if (!roomRes) return;
 
-    const { currentPlayer, roomPlayers } = roomRes;
+    const { roomPlayers } = roomRes;
     const clients = roomPlayers
-      .map((name) => players.getPlayerByName(name)?.socket)
+      .map((name) => players.getPlayerByName(name))
       .filter((socket) => socket !== undefined);
 
     const game = games.createGame(
       message.data.indexRoom,
       roomPlayers,
       async (_players) => {
-        _players.forEach(async (player) => {
+        const rnd = Math.random();
+        const playerToAttack = rnd < 0.5 ? _players[0].name : _players[1].name;
+
+        for (const player of _players) {
           const socket = players.getPlayerByName(player.name)?.socket;
-          if (!socket) return;
+          if (!socket) continue;
 
           await socketChannel.send(
             {
@@ -54,22 +57,35 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
             },
             { socket },
           );
-        });
+
+          await socketChannel.send(
+            {
+              type: ServerMessageTypes.TURN,
+              data: {
+                currentPlayer: playerToAttack,
+              },
+            },
+            { socket },
+          );
+        }
 
         console.log('--> Game started');
+        console.log(`--> ${playerToAttack} turn`);
       },
     );
 
-    await socketChannel.broadcast(
-      {
-        type: ServerMessageTypes.CREATE_GAME,
-        data: {
-          idGame: game.id,
-          idPlayer: currentPlayer,
+    for (const { socket, name } of clients) {
+      await socketChannel.send(
+        {
+          type: ServerMessageTypes.CREATE_GAME,
+          data: {
+            idGame: game.id,
+            idPlayer: name,
+          },
         },
-      },
-      { clients },
-    );
+        { socket },
+      );
+    }
 
     console.log(`--> Game created`);
   } catch (e) {

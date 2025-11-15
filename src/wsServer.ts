@@ -9,6 +9,7 @@ import {
   handleSocketClose,
   handleJoinRoom,
   handleAddShips,
+  handleAttack,
 } from './controllers/index.ts';
 
 const httpServer = createServer();
@@ -47,6 +48,10 @@ wsServer.on('connection', (socket) => {
         }
         case SocketMessageTypes.ADD_SHIPS: {
           await handleAddShips({ message, socketChannel });
+          break;
+        }
+        case SocketMessageTypes.ATTACK: {
+          await handleAttack({ message, socketChannel });
           break;
         }
       }
