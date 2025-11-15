@@ -54,12 +54,22 @@ export type AttackSocketMessage = {
   id: 0;
 };
 
+export type RandomAttackSocketMessage = {
+  type: typeof SocketMessageTypes.RANDOM_ATTACK;
+  data: {
+    gameId: string;
+    indexPlayer: string;
+  };
+  id: 0;
+};
+
 export type SocketMessage =
   | RegistrationSocketMessage
   | CreateRoomSocketMessage
   | AddPlayerToRoomSocketMessage
   | AddShipsSocketMessage
-  | AttackSocketMessage;
+  | AttackSocketMessage
+  | RandomAttackSocketMessage;
 
 type RegistrationServerMessage = {
   type: typeof ServerMessageTypes.REG;

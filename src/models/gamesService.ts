@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import { v4 } from 'uuid';
 
 import type { AttackStatus, Ship } from '../lib/types.ts';
+import { getRandomNum } from '../helpers/index.ts';
 
 type Player = {
   name: string;
@@ -23,6 +24,8 @@ type BattlegroundMatrix = (
   | null
   | undefined
 )[][];
+
+const MATRIX_SIZE = 10;
 
 const EventNames = {
   START: 'start',
@@ -125,6 +128,14 @@ export class GamesService {
     };
   }
 
+  public randomAttack(gameId: string, playerName: string) {
+    const [x, y] = Array.from({ length: 2 }).map(() =>
+      getRandomNum(0, MATRIX_SIZE),
+    );
+
+    return this.attack(gameId, playerName, x, y);
+  }
+
   public switchTurn(gameId: string, playerName: string) {
     const game = this.games.get(gameId);
     if (!game) return;
@@ -133,8 +144,8 @@ export class GamesService {
   }
 
   private _createBattleground(ships: Ship[]) {
-    const battleground = Array.from({ length: 10 }, () =>
-      Array.from({ length: 10 }).fill(null),
+    const battleground = Array.from({ length: MATRIX_SIZE }, () =>
+      Array.from({ length: MATRIX_SIZE }).fill(null),
     ) as BattlegroundMatrix;
 
     ships.forEach(({ length, position, direction }) => {

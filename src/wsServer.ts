@@ -10,6 +10,7 @@ import {
   handleJoinRoom,
   handleAddShips,
   handleAttack,
+  handleRandomAttack,
 } from './controllers/index.ts';
 
 const httpServer = createServer();
@@ -52,6 +53,10 @@ wsServer.on('connection', (socket) => {
         }
         case SocketMessageTypes.ATTACK: {
           await handleAttack({ message, socketChannel });
+          break;
+        }
+        case SocketMessageTypes.RANDOM_ATTACK: {
+          await handleRandomAttack({ message, socketChannel });
           break;
         }
       }
