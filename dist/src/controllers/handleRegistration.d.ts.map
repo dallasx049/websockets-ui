@@ -1,0 +1,1 @@
+{"version":3,"file":"handleRegistration.d.ts","sourceRoot":"","sources":["../../../src/controllers/handleRegistration.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,yBAAyB,EAAE,MAAM,iBAAiB,CAAC;AACjE,OAAO,EAEL,KAAK,cAAc,EACpB,MAAM,qBAAqB,CAAC;AAI7B,eAAO,MAAM,kBAAkB,GAAU,6BAGtC;IACD,OAAO,EAAE,yBAAyB,CAAC;IACnC,aAAa,EAAE,cAAc,CAAC;CAC/B,kBAiDA,CAAC"}

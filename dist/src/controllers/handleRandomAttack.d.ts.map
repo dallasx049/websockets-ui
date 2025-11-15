@@ -1,0 +1,1 @@
+{"version":3,"file":"handleRandomAttack.d.ts","sourceRoot":"","sources":["../../../src/controllers/handleRandomAttack.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,yBAAyB,EAAE,MAAM,iBAAiB,CAAC;AACjE,OAAO,EAAE,KAAK,cAAc,EAAE,MAAM,qBAAqB,CAAC;AAI1D,eAAO,MAAM,kBAAkB,GAAU,6BAGtC;IACD,OAAO,EAAE,yBAAyB,CAAC;IACnC,aAAa,EAAE,cAAc,CAAC;CAC/B,kBA2CA,CAAC"}

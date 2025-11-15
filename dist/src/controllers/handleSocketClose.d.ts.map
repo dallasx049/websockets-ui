@@ -1,0 +1,1 @@
+{"version":3,"file":"handleSocketClose.d.ts","sourceRoot":"","sources":["../../../src/controllers/handleSocketClose.ts"],"names":[],"mappings":"AAAA,OAAO,EAEL,KAAK,cAAc,EACpB,MAAM,qBAAqB,CAAC;AAI7B,KAAK,MAAM,GAAG;IACZ,aAAa,EAAE,cAAc,CAAC;IAC9B,IAAI,EAAE,MAAM,CAAC;CACd,CAAC;AAEF,eAAO,MAAM,iBAAiB,GAAU,yBAAyB,MAAM,kBAgBtE,CAAC"}
