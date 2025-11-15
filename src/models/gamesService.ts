@@ -22,7 +22,7 @@ type Game = {
 };
 
 type BattlegroundMatrix = (
-  | Omit<Ship, 'position' | 'type' | 'direction'>
+  | (Ship & { initialLength: number })
   | null
   | undefined
 )[][];
@@ -116,6 +116,8 @@ export class GamesService {
 
     if (cell === undefined) throw new CellAlreadyHitError();
 
+    const coords: { x: number; y: number }[] = [];
+
     let status: AttackStatus;
 
     if (cell === null) {
@@ -138,11 +140,27 @@ export class GamesService {
 
     enemy.battleground[x][y] = undefined;
 
+    if (cell && status === 'killed') {
+      const { position, direction, initialLength } = cell;
+
+      if (direction) {
+        for (let i = position.y; i < position.y + initialLength; i++) {
+          coords.push({ x: position.x, y: i });
+        }
+      } else {
+        for (let i = position.x; i < position.x + initialLength; i++) {
+          coords.push({ x: i, y: position.y });
+        }
+      }
+    } else {
+      coords.push({ x, y });
+    }
+
     return {
       playerName,
       status,
       enemyName: enemy.name,
-      position: { x, y },
+      coords,
       attackTurnPlayerName: game.attackTurnPlayerName,
     };
   }
@@ -182,8 +200,8 @@ export class GamesService {
 
     let pointsToWin = 0;
 
-    ships.forEach(({ length, position, direction }) => {
-      const cell = { length };
+    ships.forEach(({ length, position, direction, type }) => {
+      const cell = { length, direction, type, position, initialLength: length };
 
       if (direction) {
         for (let i = position.y; i < position.y + length; i++) {

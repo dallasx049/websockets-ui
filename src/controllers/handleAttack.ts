@@ -16,17 +16,19 @@ export const handleAttack = async ({
     const feedback = games.attack(gameId, indexPlayer, x, y);
     if (!feedback) return;
 
-    const { playerName, enemyName, status, position, attackTurnPlayerName } =
+    const { playerName, enemyName, status, coords, attackTurnPlayerName } =
       feedback;
 
-    await socketChannel.send({
-      type: ServerMessageTypes.ATTACK,
-      data: {
-        currentPlayer: playerName,
-        status,
-        position,
-      },
-    });
+    for (const position of coords) {
+      await socketChannel.send({
+        type: ServerMessageTypes.ATTACK,
+        data: {
+          currentPlayer: playerName,
+          status,
+          position,
+        },
+      });
+    }
 
     for (const name of [playerName, enemyName]) {
       const player = players.getPlayerByName(name);
