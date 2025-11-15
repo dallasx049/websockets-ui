@@ -98,15 +98,11 @@ export class RoomsService implements IRoomsService {
 
     rooms.forEach((room) => {
       if (room.players.size >= this.MAX_PLAYERS) {
-        [...room.players].forEach((name) => {
-          const _player = this.playersService.getPlayerByName(name);
-          _player?.socket.close();
-        });
         this.rooms.delete(room.id);
+      } else {
+        room.players.delete(player.name);
+        room.open = true;
       }
-
-      room.players.delete(player.name);
-      room.open = true;
     });
   }
 

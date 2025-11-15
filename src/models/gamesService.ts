@@ -47,7 +47,7 @@ export class GamesService {
     roomId: string,
     playersNames: string[],
     onGameStart: (gameId: string, players: Player[]) => void,
-    onGameEnd: (winnerName: string, loserName: string) => void,
+    onGameEnd: (gameId: string, winnerName: string, loserName: string) => void,
   ) {
     const id = randomUUID();
     const players = new Map<string, Player>();
@@ -132,7 +132,7 @@ export class GamesService {
       }
 
       if (player.pointsToWin === 0) {
-        game.eventEmitter.emit(EventNames.WIN, player.name, enemy.name);
+        game.eventEmitter.emit(EventNames.WIN, gameId, player.name, enemy.name);
       }
     }
 
@@ -145,6 +145,10 @@ export class GamesService {
       position: { x, y },
       attackTurnPlayerName: game.attackTurnPlayerName,
     };
+  }
+
+  public deleteGame(gameId: string) {
+    this.games.delete(gameId);
   }
 
   public randomAttack(gameId: string, playerName: string) {

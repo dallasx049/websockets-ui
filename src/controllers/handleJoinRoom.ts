@@ -74,7 +74,7 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
         console.log('--> Game started');
         console.log(`--> ${playerToAttack} turn`);
       },
-      async (winnerName, loserName) => {
+      async (gameId, winnerName, loserName) => {
         const clients = [winnerName, loserName]
           .map((name) => players.getPlayerByName(name)?.socket)
           .filter((socket) => socket !== undefined);
@@ -104,6 +104,9 @@ export const handleJoinRoom = async ({ message, socketChannel }: Params) => {
           data: leaderboardPayload,
         });
         console.log(`--> Leaderboard updated`);
+
+        rooms.leaveAllRooms(clients[0]);
+        games.deleteGame(gameId);
       },
     );
 
