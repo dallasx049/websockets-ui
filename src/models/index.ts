@@ -13,6 +13,8 @@ export {
   PlayerAlreadyJoinedRoomError,
 } from './roomsService.ts';
 
+export { CellAlreadyHitError } from './gamesService.ts';
+
 // Export an instance of service to act as distributed DB with single source
 export const players = new PlayersService();
 export const rooms = new RoomsService(players);

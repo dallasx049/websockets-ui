@@ -30,4 +30,5 @@ export const ErrorMessages = {
   INVALID_MESSAGE_FORMAT: 'Invalid message format',
   ROOM_ALREADY_OWNED: 'Player already created a room',
   PLAYER_ALREADY_JOINED: 'Player already joined this room',
+  CELL_ALREADY_HIT: "You've already hit this cell",
 } as const;

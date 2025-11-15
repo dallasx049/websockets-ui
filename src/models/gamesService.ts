@@ -3,6 +3,7 @@ import { v4 } from 'uuid';
 
 import type { AttackStatus, Ship } from '../lib/types.ts';
 import { getRandomNum } from '../helpers/index.ts';
+import { ErrorMessages } from '../lib/constants.ts';
 
 type Player = {
   name: string;
@@ -30,6 +31,12 @@ const MATRIX_SIZE = 10;
 const EventNames = {
   START: 'start',
 } as const;
+
+export class CellAlreadyHitError extends Error {
+  constructor(message = ErrorMessages.CELL_ALREADY_HIT) {
+    super(message);
+  }
+}
 
 export class GamesService {
   private games: Map<string, Game> = new Map();
@@ -100,7 +107,7 @@ export class GamesService {
 
     const cell = enemy.battleground[x][y];
 
-    if (cell === undefined) return;
+    if (cell === undefined) throw new CellAlreadyHitError();
 
     let status: AttackStatus;
 
@@ -129,11 +136,20 @@ export class GamesService {
   }
 
   public randomAttack(gameId: string, playerName: string) {
-    const [x, y] = Array.from({ length: 2 }).map(() =>
-      getRandomNum(0, MATRIX_SIZE),
-    );
+    try {
+      const [x, y] = Array.from({ length: 2 }).map(() =>
+        getRandomNum(0, MATRIX_SIZE),
+      );
 
-    return this.attack(gameId, playerName, x, y);
+      return this.attack(gameId, playerName, x, y);
+    } catch (e) {
+      if (e instanceof CellAlreadyHitError) {
+        console.log(e.message);
+        this.randomAttack(gameId, playerName);
+      } else {
+        throw new Error();
+      }
+    }
   }
 
   public switchTurn(gameId: string, playerName: string) {
