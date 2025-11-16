@@ -1,21 +1,37 @@
 {
-    "name": "ws_task",
-    "version": "1.0.0",
-    "description": "Template for the WebSocket remote control task",
-    "main": "index.js",
-    "type": "module",
-    "scripts": {
-        "start": "node ./index.js",
-        "start:dev": "nodemon ./index.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "Andrei Auchynnikau",
-    "keywords": [],
-    "license": "ISC",
-    "devDependencies": {
-        "nodemon": "^2.0.16"
-    },
-    "dependencies": {
-        "ws": "^8.8.0"
-    }
+  "name": "ws_task",
+  "version": "1.0.0",
+  "description": "Template for the WebSocket remote control task",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "webpack --config webpack.config.ts && node ./dist/index.js",
+    "start": "node ./dist/index.js",
+    "start:dev": "nodemon ./index.ts"
+  },
+  "author": "dallasx",
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.0",
+    "@types/ws": "^8.18.1",
+    "copy-webpack-plugin": "^12.0.2",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "jiti": "^2.6.1",
+    "nodemon": "^3.1.10",
+    "prettier": "3.6.2",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
+  }
 }
