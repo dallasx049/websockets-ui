@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 
 import { Env, SocketMessageTypes } from './lib/constants.ts';
 import { SocketChannel } from './helpers/index.ts';
@@ -13,20 +13,28 @@ import {
   handleRandomAttack,
 } from './controllers/index.ts';
 
+const STALENESS_CHECK_TIMEOUT = 30_000;
+
 const httpServer = createServer();
 const wsServer = new WebSocketServer({ server: httpServer });
 
+const aliveSockets = new Set<WebSocket>();
+
 wsServer.on('connection', (socket) => {
   const socketChannel = new SocketChannel(socket, wsServer);
+  aliveSockets.add(socket);
 
   console.log('Socket connected to the server');
 
+  socket.on('pong', () => aliveSockets.add(socket));
+
   socket.on('error', (e) => {
-    console.error('Socket error: ', e);
-    socket.close();
+    console.log('Socket terminated with error: ', e);
+    socket.terminate();
   });
 
   socket.on('close', async (code) => {
+    aliveSockets.delete(socket);
     await handleSocketClose({ socketChannel, code });
   });
 
@@ -61,7 +69,7 @@ wsServer.on('connection', (socket) => {
         }
       }
     } catch {
-      socket.close();
+      socket.terminate();
     }
   });
 });
@@ -69,3 +77,15 @@ wsServer.on('connection', (socket) => {
 httpServer.listen(Env.WS_PORT, () => {
   console.log(`WebSocket server is listening on port: ${Env.WS_PORT}\n`);
 });
+
+// Heartbeat check
+setInterval(() => {
+  wsServer.clients.forEach((socket) => {
+    if (!aliveSockets.has(socket)) {
+      return socket.terminate();
+    }
+
+    aliveSockets.delete(socket);
+    socket.ping();
+  });
+}, STALENESS_CHECK_TIMEOUT);
